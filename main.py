@@ -15,7 +15,7 @@ def nightModeCheck(hsv) -> bool:
         return True
     return False
 
-path = 'videos/10.mp4'
+path = 'videos/night1.mp4'
 cap = cv2.VideoCapture(path)
 _, frame = cap.read()
 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # convert it to grayscale (easier to find contours)

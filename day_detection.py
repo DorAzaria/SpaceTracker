@@ -16,17 +16,16 @@ def skyModeCheck(hsv) -> bool:
     return False
 
 
-def rescaleFrame(scale=1):
+def rescaleFrame(scale=0.):
     width = int(frame.shape[1] * scale)
     height = int(frame.shape[0] * scale)
     dimensions = (width, height)
-
     return cv.resize(frame, dimensions, interpolation=cv.INTER_AREA)
 
 
 def getTarget(fr, cont):
     (hc, wc) = fr.shape[:2]  # w:image-width and h:image-height
-    cv.circle(fr, (wc // 2, hc // 2), 7, (0, 0, 255), -1)
+    # cv.circle(fr, (wc // 2, hc // 2), 7, (0, 0, 255), -1)
 
     M = cv.moments(cont)
     cX = int(M["m10"] / M["m00"])
@@ -43,37 +42,37 @@ def getTarget(fr, cont):
 
     if centerX > 0 and centerY > 20:  # Up-Left
         # cv.arrowedLine(frame_resized, (fX, fY), (fX - 30, fY - 30), (0, 0, 255), thickness=2, tipLength=0.5)
-        cv.putText(frame_resized, "Up-Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        cv.putText(frame, "Up-Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
     elif centerX > -10 and centerY >= -20:  # Left
         # cv.arrowedLine(frame_resized, (fX, fY), (fX - 30, fY), (0, 0, 255), thickness=2, tipLength=0.5)
-        cv.putText(frame_resized, "Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        cv.putText(frame, "Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
     elif centerX > 10 and centerY < -10:  # Down-Left
         # cv.arrowedLine(frame_resized, (fX, fY), (fX - 30, fY + 30), (0, 0, 255), thickness=2, tipLength=0.5)
-        cv.putText(frame_resized, "Down-Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        cv.putText(frame, "Down-Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
     elif centerX < 0 and centerY < -20:  # Down-Right
         # cv.arrowedLine(frame_resized, (fX, fY), (fX + 30, fY + 30), (0, 0, 255), thickness=2, tipLength=0.5)
-        cv.putText(frame_resized, "Down-Right", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        cv.putText(frame, "Down-Right", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
     elif -50 > centerX and centerY > 50:  # Up-Right
         # cv.arrowedLine(frame_resized, (fX, fY), (fX + 30, fY - 30), (0, 0, 255), thickness=2, tipLength=0.5)
-        cv.putText(frame_resized, "Up-Right", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        cv.putText(frame, "Up-Right", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
     elif centerX < 20 and centerY < -30:  # Down
         # cv.arrowedLine(frame_resized, (fX, fY), (fX, fY + 30), (0, 0, 255), thickness=2, tipLength=0.5)
-        cv.putText(frame_resized, "Down", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        cv.putText(frame, "Down", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
     else:  # Up
         # cv.arrowedLine(frame_resized, (fX, fY), (fX, fY - 30), (0, 0, 255), thickness=2, tipLength=0.5)
-        cv.putText(frame_resized, "Up", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        cv.putText(frame, "Up", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
     # if sound_flag is not sound_path:
@@ -98,7 +97,7 @@ def groundMode(hsvFrame):
 
     # For red color
     red_mask = cv.dilate(red_mask, kernal)
-    res_red = cv.bitwise_and(frame_resized, frame_resized, mask=red_mask)
+    res_red = cv.bitwise_and(frame, frame, mask=red_mask)
 
     # Creating contour to track red color
     # Using contour detection, we can detect the borders of objects, and therefore, localize them easily.
@@ -107,9 +106,9 @@ def groundMode(hsvFrame):
     contours.sort(key=lambda x: cv.contourArea(x))
     if contours:
         aa = contours[-1]
-        getTarget(frame_resized, aa)
+        getTarget(frame, aa)
         x, y, w, h = cv.boundingRect(aa)
-        cv.rectangle(frame_resized, (x, y), (x + w, y + h), (0, 255, 0), thickness=3)
+        cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), thickness=3)
 
 
 def skyMode(curr_frame, hsvFrame):
@@ -129,44 +128,43 @@ def skyMode(curr_frame, hsvFrame):
 
             if k <= 5 and 5 < cv.contourArea(aa) < 100000:
                 if len(contours) == 1:
-                    getTarget(frame_resized, aa)
+                    getTarget(frame, aa)
                 x, y, w, h = cv.boundingRect(aa)
-                cv.rectangle(frame_resized, (x - 10, y - 10), (x + w, y + h), (0, 255, 0), thickness=3)
+                cv.rectangle(frame, (x - 10, y - 10), (x + w, y + h), (0, 255, 0), thickness=3)
             k += 1
     groundMode(hsvFrame)
 
 
 def dayAction(path):
-    global frame_resized
+    # global frame_resized
     global frame
+
     capture = cv.VideoCapture(path)
-    # capture.set(cv.CAP_ANY, 15000)
+    capture.set(cv.CAP_ANY, 75000)
 
     mixer.init()
     sound_flag = "none"
-
-
 
     # We need to extract the frames one after another
     # So on each loop we'll get one frame
     while capture.isOpened():
         isTrue, frame = capture.read()
-        frame_resized = rescaleFrame()
+        # frame_resized = rescaleFrame()
 
         # Convert the imageFrame in
         # BGR(RGB color space) to
         # HSV(hue-saturation-value)
         # color space
-        hsvFrame = cv.cvtColor(frame_resized, cv.COLOR_BGR2HSV)
+        hsvFrame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
         if skyModeCheck(hsvFrame):
-            cv.putText(frame_resized, "Sky Mode", (5, 60), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0))
-            skyMode(frame_resized,hsvFrame)
+            cv.putText(frame, "Sky Mode", (5, 60), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0))
+            skyMode(frame,hsvFrame)
         else:
-            cv.putText(frame_resized, "Ground Mode", (5, 60), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
+            cv.putText(frame, "Ground Mode", (5, 60), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
             groundMode(hsvFrame)
 
-        cv.imshow("Frame", frame_resized)
+        cv.imshow("Frame", frame)
 
         key = cv.waitKey(30)
 
