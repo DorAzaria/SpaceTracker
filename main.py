@@ -30,18 +30,3 @@ if __name__ == "__main__":
         day_detection.dayAction(path)
         print("day mode.")
 
-    # blur = cv2.blur(gray, (5, 5))  # With kernel size depending upon image size
-    # # for pixel in blur:
-    # avg = 0
-    # for i in range(gray.rows):
-    #     for j in range(gray.cols):
-    #         avg += gray[i, j]
-    # avg /= (gray.rows * gray.cols)
-    #
-    # if avg < 50:  # 50 is about 20% light, which means night
-    #     print('dark picture')
-    # #
-    # #     # night_detection.operate_night_video('airplain_video.mp4' )
-    # else:
-    #     # day_detection.operate_day_video("1.mp4")
-    #     print('light picture')
