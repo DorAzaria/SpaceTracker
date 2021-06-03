@@ -15,7 +15,7 @@ def nightModeCheck(hsv) -> bool:
         return True
     return False
 
-path = 'videos/9.MTS'
+path = 'videos/6.mp4'
 cap = cv2.VideoCapture(path)
 _, frame = cap.read()
 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # convert it to grayscale (easier to find contours)
@@ -24,9 +24,9 @@ blur = cv2.GaussianBlur(gray, (5, 5), 0)
 if __name__ == "__main__":
 
     if nightModeCheck(frame):
-        print("night mode.")
+        print("Night Mode.")
         night_detection.operate_night_video(path)
     else:
+        print("Day Mode.")
         day_detection.dayAction(path)
-        print("day mode.")
 

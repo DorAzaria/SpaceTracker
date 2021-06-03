@@ -1,11 +1,33 @@
 import cv2 as cv
 import numpy as np
-from pygame import mixer
+from numpy import long
+import statistics
 
 # Set range for blue color for moving to sky mode
 # define mask
 lower_blue = np.array([0, 0, 0])
 upper_blue = np.array([179, 255, 155])
+stat = []
+avg_contours = []
+tempMaxLoc = (0, 0)
+backSub = cv.createBackgroundSubtractorMOG2(history=20, varThreshold=50, detectShadows=True)
+backSub.setNMixtures(8)
+lastMean = 0
+tracker = cv.legacy_TrackerCSRT.create()
+target_flag = False
+
+def statisticallyTarget():
+    average = statistics.mean(avg_contours)
+    if average >= 1000:
+        return 100
+    elif average >= 700:
+        return 300
+    elif average >= 500:
+        return 500
+    elif average >= 10:
+        return 700
+    else:
+        return 700
 
 
 def skyModeCheck(hsv) -> bool:
@@ -16,7 +38,7 @@ def skyModeCheck(hsv) -> bool:
     return False
 
 
-def rescaleFrame(scale=0.):
+def rescaleFrame(scale=0.5):
     width = int(frame.shape[1] * scale)
     height = int(frame.shape[0] * scale)
     dimensions = (width, height)
@@ -25,63 +47,45 @@ def rescaleFrame(scale=0.):
 
 def getTarget(fr, cont):
     (hc, wc) = fr.shape[:2]  # w:image-width and h:image-height
-    # cv.circle(fr, (wc // 2, hc // 2), 7, (0, 0, 255), -1)
 
     M = cv.moments(cont)
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
     fX = wc // 2
     fY = hc // 2
-
     centerX = fX - cX
     centerY = fY - cY
-    cv.putText(fr, f"Center({abs(centerX)},{abs(centerY)})", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-
-    # print(f'({centerX}, {centerY})')
-    sound_path = ""
 
     if centerX > 0 and centerY > 20:  # Up-Left
         # cv.arrowedLine(frame_resized, (fX, fY), (fX - 30, fY - 30), (0, 0, 255), thickness=2, tipLength=0.5)
         cv.putText(frame, "Up-Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
-
     elif centerX > -10 and centerY >= -20:  # Left
         # cv.arrowedLine(frame_resized, (fX, fY), (fX - 30, fY), (0, 0, 255), thickness=2, tipLength=0.5)
         cv.putText(frame, "Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-
 
     elif centerX > 10 and centerY < -10:  # Down-Left
         # cv.arrowedLine(frame_resized, (fX, fY), (fX - 30, fY + 30), (0, 0, 255), thickness=2, tipLength=0.5)
         cv.putText(frame, "Down-Left", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
-
     elif centerX < 0 and centerY < -20:  # Down-Right
         # cv.arrowedLine(frame_resized, (fX, fY), (fX + 30, fY + 30), (0, 0, 255), thickness=2, tipLength=0.5)
         cv.putText(frame, "Down-Right", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-
 
     elif -50 > centerX and centerY > 50:  # Up-Right
         # cv.arrowedLine(frame_resized, (fX, fY), (fX + 30, fY - 30), (0, 0, 255), thickness=2, tipLength=0.5)
         cv.putText(frame, "Up-Right", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
-
     elif centerX < 20 and centerY < -30:  # Down
         # cv.arrowedLine(frame_resized, (fX, fY), (fX, fY + 30), (0, 0, 255), thickness=2, tipLength=0.5)
         cv.putText(frame, "Down", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-
 
     else:  # Up
         # cv.arrowedLine(frame_resized, (fX, fY), (fX, fY - 30), (0, 0, 255), thickness=2, tipLength=0.5)
         cv.putText(frame, "Up", (5, 40), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
 
-    # if sound_flag is not sound_path:
-    #     mixer.music.load(sound_path)
-    #     mixer.music.play()
-    #     sound_flag = sound_path
-
-
-def groundMode(hsvFrame):
+def groundMode(frame_resized, hsvFrame):
     # Set range for red color and
     # define mask
     red_lower = np.array([136, 87, 111], np.uint8)
@@ -97,7 +101,6 @@ def groundMode(hsvFrame):
 
     # For red color
     red_mask = cv.dilate(red_mask, kernal)
-    res_red = cv.bitwise_and(frame, frame, mask=red_mask)
 
     # Creating contour to track red color
     # Using contour detection, we can detect the borders of objects, and therefore, localize them easily.
@@ -106,33 +109,73 @@ def groundMode(hsvFrame):
     contours.sort(key=lambda x: cv.contourArea(x))
     if contours:
         aa = contours[-1]
-        getTarget(frame, aa)
+        getTarget(frame_resized, aa)
         x, y, w, h = cv.boundingRect(aa)
-        cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), thickness=3)
+        cv.rectangle(frame_resized, (x, y), (x + w, y + h), (0, 255, 0), thickness=3)
+
+def drawBox(img,bbox):
+    x, y, w, h = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+    cv.rectangle(img, (x, y), ((x + w), (y + h)), (0, 255, 0), 3, 3 )
+    cv.putText(img, "ON TARGET!", (5, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
 
 
-def skyMode(curr_frame, hsvFrame):
+def skyMode(fr):
+    global tempMaxLoc
+    global lastMean
+    global target_flag
+    global tracker
 
-    gray = cv.cvtColor(curr_frame, cv.COLOR_RGB2GRAY)
-    _, binary = cv.threshold(gray, 225, 255, cv.THRESH_BINARY_INV)
+    fgMask = backSub.apply(fr)
 
-    # Creating contour to track red color
-    # Using contour detection, we can detect the borders of objects, and therefore, localize them easily.
-    # RETR_TREE, CHAIN_APPROX_SIMPLE are not really matter, it's just a technic of how to extract the info.
-    contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    contours.sort(key=lambda x: cv.contourArea(x), reverse=True)
-    if contours:
-        k = 0
-        for i in range(len(contours)):
-            aa = contours[i]
+    fram, thresh = cv.threshold(fgMask, 127, 255, 0)
+    contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-            if k <= 5 and 5 < cv.contourArea(aa) < 100000:
-                if len(contours) == 1:
-                    getTarget(frame, aa)
-                x, y, w, h = cv.boundingRect(aa)
-                cv.rectangle(frame, (x - 10, y - 10), (x + w, y + h), (0, 255, 0), thickness=3)
-            k += 1
-    groundMode(hsvFrame)
+    avg = len(contours)
+    avg_contours.append(avg)
+
+    gray = cv.GaussianBlur(fgMask, (7, 7), 0)
+    (minVal, maxVal, minLoc, maxLoc) = cv.minMaxLoc(gray)
+    locMean = (maxLoc[0] + maxLoc[1]) / 2
+    stat.append(long(locMean))
+    x = statistics.mean(stat)
+    get_stat = statisticallyTarget()
+
+    if len(stat) == 100:
+        stat.pop(0)
+        lastMean = x
+
+    if len(avg_contours) == 100:
+        avg_contours.pop(0)
+    measure = abs(x - maxLoc[0])
+    key = cv.waitKey(1)
+
+    if measure <= get_stat:
+        success, bbox = tracker.update(fr)
+        if target_flag and success:
+            drawBox(fr, bbox)
+        else:
+
+            # 32 = 'Space' on the keyboard
+            if key == 32:
+                box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
+                tracker.init(fr, box)
+                target_flag = True
+                print("On a new target!")
+
+            if maxLoc[0] != 0 and maxLoc[1] != 0:
+                cv.rectangle(fr, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20), (0, 0, 255),thickness=3)
+
+            cv.putText(fr, "LOST!", (5, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+            tempMaxLoc = maxLoc
+
+        if key == 67 or key == 99:
+            print("The target is canceled!")
+            tracker = cv.legacy_TrackerCSRT.create()
+            target_flag = False
+
+    else:
+        cv.circle(fr, tempMaxLoc, 7, (0, 0, 255), 2)
+
 
 
 def dayAction(path):
@@ -142,29 +185,29 @@ def dayAction(path):
     capture = cv.VideoCapture(path)
     capture.set(cv.CAP_ANY, 75000)
 
-    mixer.init()
-    sound_flag = "none"
-
     # We need to extract the frames one after another
     # So on each loop we'll get one frame
     while capture.isOpened():
+        timer = cv.getTickCount()
         isTrue, frame = capture.read()
-        # frame_resized = rescaleFrame()
-
+        frame_resized = rescaleFrame()
         # Convert the imageFrame in
         # BGR(RGB color space) to
         # HSV(hue-saturation-value)
         # color space
-        hsvFrame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        hsvFrame = cv.cvtColor(frame_resized, cv.COLOR_BGR2HSV)
 
         if skyModeCheck(hsvFrame):
-            cv.putText(frame, "Sky Mode", (5, 60), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0))
-            skyMode(frame,hsvFrame)
+            cv.putText(frame_resized, "Sky Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+            skyMode(frame_resized)
         else:
-            cv.putText(frame, "Ground Mode", (5, 60), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
-            groundMode(hsvFrame)
+            cv.putText(frame_resized, "Ground Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+            groundMode(frame_resized, hsvFrame)
 
-        cv.imshow("Frame", frame)
+        fps = cv.getTickFrequency() / (cv.getTickCount() - timer)
+        cv.putText(frame_resized, f"FPS={int(fps)}", (5, 45),cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+
+        cv.imshow("Frame", frame_resized)
 
         key = cv.waitKey(30)
 
