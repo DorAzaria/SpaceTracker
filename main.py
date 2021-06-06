@@ -1,7 +1,6 @@
 import cv2
 import night_detection
 import day_detection
-import imageio
 import numpy as np
 
 lower_night = np.array([0, 0, 0])
@@ -15,7 +14,8 @@ def nightModeCheck(hsv) -> bool:
         return True
     return False
 
-path = 'videos/6.mp4'
+
+path = 'videos/9.MTS'
 cap = cv2.VideoCapture(path)
 _, frame = cap.read()
 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # convert it to grayscale (easier to find contours)
@@ -29,4 +29,3 @@ if __name__ == "__main__":
     else:
         print("Day Mode.")
         day_detection.dayAction(path)
-

@@ -16,6 +16,7 @@ lastMean = 0
 tracker = cv.legacy_TrackerCSRT.create()
 target_flag = False
 
+
 def statisticallyTarget():
     average = statistics.mean(avg_contours)
     if average >= 1000:
@@ -38,7 +39,7 @@ def skyModeCheck(hsv) -> bool:
     return False
 
 
-def rescaleFrame(scale=0.5):
+def rescaleFrame(scale=0.75):
     width = int(frame.shape[1] * scale)
     height = int(frame.shape[0] * scale)
     dimensions = (width, height)
@@ -113,9 +114,10 @@ def groundMode(frame_resized, hsvFrame):
         x, y, w, h = cv.boundingRect(aa)
         cv.rectangle(frame_resized, (x, y), (x + w, y + h), (0, 255, 0), thickness=3)
 
-def drawBox(img,bbox):
+
+def drawBox(img, bbox):
     x, y, w, h = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
-    cv.rectangle(img, (x, y), ((x + w), (y + h)), (0, 255, 0), 3, 3 )
+    cv.rectangle(img, (x, y), ((x + w), (y + h)), (0, 255, 0), 3, 3)
     cv.putText(img, "ON TARGET!", (5, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
 
 
@@ -163,7 +165,8 @@ def skyMode(fr):
                 print("On a new target!")
 
             if maxLoc[0] != 0 and maxLoc[1] != 0:
-                cv.rectangle(fr, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20), (0, 0, 255),thickness=3)
+                cv.rectangle(fr, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20), (0, 0, 255),
+                             thickness=3)
 
             cv.putText(fr, "LOST!", (5, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
             tempMaxLoc = maxLoc
@@ -173,28 +176,18 @@ def skyMode(fr):
             tracker = cv.legacy_TrackerCSRT.create()
             target_flag = False
 
-    else:
-        cv.circle(fr, tempMaxLoc, 7, (0, 0, 255), 2)
-
-
 
 def dayAction(path):
-    # global frame_resized
     global frame
 
     capture = cv.VideoCapture(path)
-    capture.set(cv.CAP_ANY, 75000)
+    capture.set(cv.CAP_ANY, 90000)
 
-    # We need to extract the frames one after another
-    # So on each loop we'll get one frame
     while capture.isOpened():
         timer = cv.getTickCount()
         isTrue, frame = capture.read()
         frame_resized = rescaleFrame()
-        # Convert the imageFrame in
-        # BGR(RGB color space) to
-        # HSV(hue-saturation-value)
-        # color space
+
         hsvFrame = cv.cvtColor(frame_resized, cv.COLOR_BGR2HSV)
 
         if skyModeCheck(hsvFrame):
@@ -205,7 +198,7 @@ def dayAction(path):
             groundMode(frame_resized, hsvFrame)
 
         fps = cv.getTickFrequency() / (cv.getTickCount() - timer)
-        cv.putText(frame_resized, f"FPS={int(fps)}", (5, 45),cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+        cv.putText(frame_resized, f"FPS={int(fps)}", (5, 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
 
         cv.imshow("Frame", frame_resized)
 
