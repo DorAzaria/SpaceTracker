@@ -1,45 +1,109 @@
-import cv2
+import cv2 as cv
+from numpy import long
+import statistics
 
 
-def operate_night_video(input_image):
+class NightMode:
 
-    cap = cv2.VideoCapture(input_image)
-    out = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc('X', 'V', 'I', 'D'), 5.0, (1280, 720))
+    def __init__(self):
+        self.stat = []
+        self.avg_contours = []
+        self.tempMaxLoc = (0, 0)
+        self.backSub = cv.createBackgroundSubtractorMOG2(history=20, varThreshold=50, detectShadows=True)
+        self.backSub.setNMixtures(8)
+        self.lastMean = 0
+        self.tracker = cv.legacy_TrackerCSRT.create()
+        self.target_flag = False
+        self.frame = None
+        self.bbox = None
 
-    # read first two frames
-    _, frame1 = cap.read()
-    _, frame2 = cap.read()
-    print(frame1.shape)
-    while cap.isOpened():
+    def nightAction(self, fr, state) -> tuple:
+        self.frame = fr
+        timer = cv.getTickCount()
 
-        # prepare mask:
-        diff = cv2.absdiff(frame1, frame2)  # find the difference between the frames
-        gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)  # convert it to grayscale (easier to find contours)
-        blur = cv2.GaussianBlur(gray, (5, 5), 0)
-        # divide to black and white (if above 20, it's white, otherwise black)
-        _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
-        dilated = cv2.dilate(thresh, None, iterations=3)
-        contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cv.putText(self.frame, "Sky Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
 
-        print_line = 20
-        for contour in contours:
-            (x, y, w, h) = cv2.boundingRect(contour)
+        fps = cv.getTickFrequency() / (cv.getTickCount() - timer)
+        cv.putText(self.frame, f"FPS={int(fps/1000)}", (5, 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
 
-            if cv2.contourArea(contour) > 85:
-                cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                # cv2.drawContours(frame1, contours, -1, (0, 255, 0), 2)
-                cv2.putText(frame1, "X: {} Y: {}".format(x, y), (10, print_line), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (0, 0, 255), 3)
-                # print([x, y, w, h])
-                print_line = print_line + 40
-        image = cv2.resize(frame1, (1280, 720))
-        out.write(image)
-        cv2.imshow("feed", frame1)
-        frame1 = frame2
-        _, frame2 = cap.read()
-        if cv2.waitKey(1) == 27:
-            break
+        return self.skyMode(state)
 
-    cv2.destroyAllWindows()
-    cap.release()
-    out.release()
+    def skyMode(self, state) -> tuple:
+
+        fgMask = self.backSub.apply(self.frame)
+
+        fram, thresh = cv.threshold(fgMask, 127, 255, 0)
+        contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+        avg = len(contours)
+        self.avg_contours.append(avg)
+
+        gray = cv.GaussianBlur(fgMask, (7, 7), 0)
+        (minVal, maxVal, minLoc, maxLoc) = cv.minMaxLoc(gray)
+        locMean = (maxLoc[0] + maxLoc[1]) / 2
+        self.stat.append(long(locMean))
+        x = statistics.mean(self.stat)
+        get_stat = self.statisticallyTarget()
+
+        if len(self.stat) == 100:
+            self.stat.pop(0)
+
+        if len(self.avg_contours) == 100:
+            self.avg_contours.pop(0)
+        measure = abs(x - maxLoc[0])
+
+        if measure <= get_stat:
+            position = None
+
+            success, box = self.tracker.update(self.frame)
+            if self.target_flag and success:
+                self.bbox = (box[0], box[1], box[0] + box[2], box[1] + box[3])
+                position = (box[0] + int(box[2] / 2), box[1] + int(box[3] / 2))
+            else:
+
+                # 32 = 'Space' on the keyboard
+                if state == 32:
+                    box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
+                    self.tracker.init(self.frame, box)
+                    self.target_flag = True
+                    print("On a new target!")
+
+                if maxLoc[0] != 0 and maxLoc[1] != 0:
+                    cv.rectangle(self.frame, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20),
+                                 (0, 0, 255),
+                                 thickness=3)
+
+                cv.putText(self.frame, "LOST!", (5, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+                self.tempMaxLoc = maxLoc
+
+            if state == 67 or state == 99:
+                print("The target is canceled!")
+                self.tracker = cv.legacy_TrackerCSRT.create()
+                self.target_flag = False
+
+            if position:
+                return position
+
+        return -1, -1
+
+    def statisticallyTarget(self):
+        average = statistics.mean(self.avg_contours)
+        if average >= 1000:
+            return 100
+        elif average >= 700:
+            return 300
+        elif average >= 500:
+            return 500
+        elif average >= 10:
+            return 700
+        else:
+            return 700
+
+    def getFrame(self):
+        return self.frame
+
+    def getBox(self):
+        if self.bbox:
+            return self.bbox
+        else:
+            return -1, -1, -1, -1

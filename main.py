@@ -1,31 +1,39 @@
 import cv2
-import night_detection
-import day_detection
-import numpy as np
-
-lower_night = np.array([0, 0, 0])
-upper_night = np.array([179, 255, 155])
+from object_tracking import ObjectTracking
 
 
-def nightModeCheck(hsv) -> bool:
-    mask = cv2.inRange(hsv, lower_night, upper_night)
-    mean = mask.mean()
-    if mean > 250:
-        return True
-    return False
+def rescaleFrame(frame, scale=0.5):
+    width = int(frame.shape[1] * scale)
+    height = int(frame.shape[0] * scale)
+    dimensions = (width, height)
+    return cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
 
 
-path = 'videos/9.MTS'
-cap = cv2.VideoCapture(path)
-_, frame = cap.read()
-gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # convert it to grayscale (easier to find contours)
-blur = cv2.GaussianBlur(gray, (5, 5), 0)
+if __name__ == '__main__':
+    path = 'videos/9.MTS'
+    cap = cv2.VideoCapture(path)
+    _, frame = cap.read()
 
-if __name__ == "__main__":
+    capture = cv2.VideoCapture(path)
+    capture.set(cv2.CAP_ANY, 90000)
 
-    if nightModeCheck(frame):
-        print("Night Mode.")
-        night_detection.operate_night_video(path)
-    else:
-        print("Day Mode.")
-        day_detection.dayAction(path)
+    tracker = ObjectTracking()
+
+    while capture.isOpened():
+        key = cv2.waitKey(30)
+
+        isTrue, frame = capture.read()
+        frame = rescaleFrame(frame)
+        position = tracker.track(frame, state=key)
+        print(position)
+
+        frame = tracker.getFrame()
+
+        cv2.imshow("Frame", frame)
+
+        # 27 = 'Esc' on the keyboard
+        if key == 27:
+            break
+
+    capture.release()
+    cv2.destroyAllWindows()
