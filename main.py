@@ -1,8 +1,5 @@
 import cv2
-from object_tracking import ObjectTracking
-import Telecontrol
-import time
-import numpy as np
+from Algorithm.object_tracking import ObjectTracking
 
 
 def rescaleFrame(frame, scale=0.5):
@@ -14,9 +11,9 @@ def rescaleFrame(frame, scale=0.5):
 
 if __name__ == '__main__':
     # Define the codec and create VideoWriter object
-    path = 'videos/drone1.MTS'
+    path = 'videos/night2.mp4'
     capture = cv2.VideoCapture(path)
-    capture.set(cv2.CAP_ANY, 37000)
+    capture.set(cv2.CAP_ANY, 0)
     isTrue, frame = capture.read()
     frame = rescaleFrame(frame)
     height, width, channels = frame.shape

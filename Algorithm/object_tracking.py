@@ -1,6 +1,6 @@
 import cv2
-from day_detection import DayMode
-from night_detection import NightMode
+from Algorithm.day_detection import DayMode
+from Algorithm.night_detection import NightMode
 import numpy as np
 
 
