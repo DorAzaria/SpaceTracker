@@ -1,6 +1,6 @@
 # SpaceTracker
 
-Automatic object detection for space and sky using OpenCV
+Object detection and tracking using smart algorithms via OpenCV.
 
 ## Satellites, planes and spacecrafts: <br>
 | | |
