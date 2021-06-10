@@ -1,5 +1,8 @@
 import cv2
 from object_tracking import ObjectTracking
+import Telecontrol
+import time
+import numpy as np
 
 
 def rescaleFrame(frame, scale=0.5):
@@ -10,31 +13,34 @@ def rescaleFrame(frame, scale=0.5):
 
 
 if __name__ == '__main__':
-    path = 'videos/ISS.mp4'
-    cap = cv2.VideoCapture(path)
-    _, frame = cap.read()
-
+    # Define the codec and create VideoWriter object
+    path = 'videos/drone1.MTS'
     capture = cv2.VideoCapture(path)
-    capture.set(cv2.CAP_ANY, 30000)
+    capture.set(cv2.CAP_ANY, 37000)
+    isTrue, frame = capture.read()
+    frame = rescaleFrame(frame)
+    height, width, channels = frame.shape
+
+    out = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (int(width), int(height)))
 
     tracker = ObjectTracking(color_detection=False)
 
     while capture.isOpened():
         key = cv2.waitKey(30)
-
         isTrue, frame = capture.read()
-
         frame = rescaleFrame(frame)
+
         position = tracker.track(frame, state=key)
         print(position)
-
         frame = tracker.getFrame()
+        out.write(frame)
 
         cv2.imshow("Space Tracker", frame)
 
         # 27 = 'Esc' on the keyboard
-        if key == 27:
+        if key == 27 or key & 0xFF == ord('q'):
             break
 
     capture.release()
+    out.release()
     cv2.destroyAllWindows()
