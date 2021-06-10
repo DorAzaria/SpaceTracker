@@ -19,13 +19,7 @@ class NightMode:
 
     def nightAction(self, fr, state) -> tuple:
         self.frame = fr
-        timer = cv.getTickCount()
-
-        cv.putText(self.frame, "Sky Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-
-        fps = cv.getTickFrequency() / (cv.getTickCount() - timer)
-        cv.putText(self.frame, f"FPS={int(fps/1000)}", (5, 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-
+        cv.putText(self.frame, "Sky Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0))
         return self.skyMode(state)
 
     def skyMode(self, state) -> tuple:
@@ -61,25 +55,25 @@ class NightMode:
                 position = (box[0] + int(box[2] / 2), box[1] + int(box[3] / 2))
             else:
 
-                # 32 = 'Space' on the keyboard
-                if state == 32:
-                    box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
-                    self.tracker.init(self.frame, box)
-                    self.target_flag = True
-                    print("On a new target!")
-
+                # offers new detection if no selected any for tracking
                 if maxLoc[0] != 0 and maxLoc[1] != 0:
                     cv.rectangle(self.frame, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20),
                                  (0, 0, 255),
                                  thickness=3)
 
-                cv.putText(self.frame, "LOST!", (5, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                 self.tempMaxLoc = maxLoc
 
-            if state == 67 or state == 99:
+            if state == 67 or state == 99 or not success:
                 print("The target is canceled!")
                 self.tracker = cv.legacy_TrackerCSRT.create()
                 self.target_flag = False
+
+            # 32 = 'Space' on the keyboard
+            if state == 32:
+                box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
+                self.tracker.init(self.frame, box)
+                self.target_flag = True
+                print("On a new target!")
 
             if position:
                 return position

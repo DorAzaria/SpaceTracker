@@ -6,7 +6,7 @@ import statistics
 
 class DayMode:
 
-    def __init__(self):
+    def __init__(self, color_detection):
         self.stat = []
         self.avg_contours = []
         self.tempMaxLoc = (0, 0)
@@ -16,22 +16,36 @@ class DayMode:
         self.target_flag = False
         self.frame = None
         self.bbox = None
+        self.last_mode = None
+        self.position = None
+        self.color_detection = color_detection
+
+        # Set range for red color and
+        # define mask
+        self.red_lower = np.array([136, 87, 111], np.uint8)
+        self.red_upper = np.array([180, 255, 255], np.uint8)
+
+        # Morphological Transform, Dilation
+        # for each color and bitwise_and operator
+        # between imageFrame and mask determines
+        # to detect only that particular color
+        self.kernal = np.ones((5, 5), "uint8")
 
     def dayAction(self, fr, state) -> tuple:
         self.frame = fr
-        timer = cv.getTickCount()
 
         if self.skyModeCheck():
-            cv.putText(self.frame, "Sky Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-            position = self.skyMode(state)
+            cv.putText(self.frame, "Sky Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0))
+            self.position = self.skyMode(state)
+        elif self.color_detection:
+            cv.putText(self.frame, "Ground Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0))
+            self.position = self.groundModeByColor(state)
         else:
-            cv.putText(self.frame, "Ground Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
-            position = self.groundMode(state)
+            cv.putText(self.frame, "Ground Mode", (5, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0))
+            self.position = self.groundMode(state)
 
-        fps = cv.getTickFrequency() / (cv.getTickCount() - timer)
-        cv.putText(self.frame, f"FPS={int(fps)}", (5, 45), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
 
-        return position
+        return self.position
 
     def skyModeCheck(self) -> bool:
         hsv = cv.cvtColor(self.frame, cv.COLOR_BGR2HSV)
@@ -49,8 +63,15 @@ class DayMode:
 
     def skyMode(self, state) -> tuple:
 
-        fgMask = self.backSub.apply(self.frame)
+        if self.last_mode == 'ground' and self.position[0] != -1 and self.position[1] != -1:
+            box = [self.bbox[0], self.bbox[1], self.bbox[2]-self.bbox[0], self.bbox[3]-self.bbox[1]]
+            self.tracker.init(self.frame, box)
+            self.target_flag = True
+            print("On a new target!")
+            self.last_mode = 'sky'
+            return self.bbox[0] + int(self.bbox[2] / 2), self.bbox[1] + int(self.bbox[3] / 2)
 
+        fgMask = self.backSub.apply(self.frame)
         fram, thresh = cv.threshold(fgMask, 127, 255, 0)
         contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
@@ -75,28 +96,27 @@ class DayMode:
             success, box = self.tracker.update(self.frame)
             position = None
             if self.target_flag and success:
-                self.bbox = (box[0], box[1], box[0]+box[2], box[1]+box[3])
+                self.bbox = (box[0], box[1], box[0] + box[2], box[1] + box[3])
                 position = (box[0] + int(box[2] / 2), box[1] + int(box[3] / 2))
             else:
-
-                # 32 = 'Space' on the keyboard
-                if state == 32:
-                    box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
-                    self.tracker.init(self.frame, box)
-                    self.target_flag = True
-                    print("On a new target!")
-
+                # offers new detection if no selected any for tracking
                 if maxLoc[0] != 0 and maxLoc[1] != 0:
                     cv.rectangle(self.frame, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20),
                                  (0, 0, 255), thickness=3)
 
-                cv.putText(self.frame, "LOST!", (5, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                 self.tempMaxLoc = maxLoc
 
-            if state == 67 or state == 99:
+            if state == 67 or state == 99 or not success:
                 print("The target is canceled!")
                 self.tracker = cv.legacy_TrackerCSRT.create()
                 self.target_flag = False
+
+            # 32 = 'Space' on the keyboard
+            if state == 32:
+                box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
+                self.tracker.init(self.frame, box)
+                self.target_flag = True
+                print("On a new target!")
 
             if position:
                 return position
@@ -116,36 +136,85 @@ class DayMode:
         else:
             return 700
 
-    def groundMode(self, state) -> tuple:
+    def groundModeByColor(self, state) -> tuple:
+
+        self.last_mode = 'ground'
         hsvFrame = cv.cvtColor(self.frame, cv.COLOR_BGR2HSV)
 
-        # Set range for red color and
-        # define mask
-        red_lower = np.array([136, 87, 111], np.uint8)
-        red_upper = np.array([180, 255, 255], np.uint8)
         # a mask allows us to focus only on the parts of the frame that interests us.
-        red_mask = cv.inRange(hsvFrame, red_lower, red_upper)
-
-        # Morphological Transform, Dilation
-        # for each color and bitwise_and operator
-        # between imageFrame and mask determines
-        # to detect only that particular color
-        kernal = np.ones((5, 5), "uint8")
+        red_mask = cv.inRange(hsvFrame, self.red_lower, self.red_upper)
 
         # For red color
-        red_mask = cv.dilate(red_mask, kernal)
+        red_mask = cv.dilate(red_mask, self.kernal)
 
         # Creating contour to track red color
         # Using contour detection, we can detect the borders of objects, and therefore, localize them easily.
         # RETR_TREE, CHAIN_APPROX_SIMPLE are not really matter, it's just a technic of how to extract the info.
         contours, hierarchy = cv.findContours(red_mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        contours.sort(key=lambda x: cv.contourArea(x))
+        contours.sort(key=lambda t: cv.contourArea(t))
         if contours:
-            aa = contours[-1]
-            x, y, w, h = cv.boundingRect(aa)
-            cv.rectangle(self.frame, (x, y), (x + w, y + h), (0, 255, 0), thickness=3)
-            self.bbox = (x, y, x + w, y + h)
-            return x, y
+            x, y, w, h = cv.boundingRect(contours[-1])
+            success, box = self.tracker.update(self.frame)
+
+            if self.target_flag and success:
+                self.bbox = (box[0], box[1], box[0] + box[2], box[1] + box[3])
+                position = (box[0] + int(box[2] / 2), box[1] + int(box[3] / 2))
+            else:
+                self.bbox = (x, y, x + w, y + h)
+                if x != 0 and y != 0:
+                    cv.rectangle(self.frame, (x, y), (x + w, y + h), (0, 0, 255), thickness=3)
+                position = -1, -1
+
+            if state == 67 or state == 99 or not success:
+                print("The target is canceled!")
+                self.tracker = cv.legacy_TrackerCSRT.create()
+                self.target_flag = False
+
+            # 32 = 'Space' on the keyboard
+            if state == 32:
+                box = [x, y , w, h]
+                self.tracker.init(self.frame, box)
+                self.target_flag = True
+                print("On a new target!")
+
+            return position
+
+        return -1, -1
+
+    def groundMode(self, state) -> tuple:
+        self.last_mode = 'ground'
+
+        fgMask = self.backSub.apply(self.frame)
+
+        gray = cv.GaussianBlur(fgMask, (7, 7), 0)
+        (minVal, maxVal, minLoc, maxLoc) = cv.minMaxLoc(gray)
+        success, box = self.tracker.update(self.frame)
+        position = None
+        if self.target_flag and success:
+            self.bbox = (box[0], box[1], box[0] + box[2], box[1] + box[3])
+            position = (box[0] + int(box[2] / 2), box[1] + int(box[3] / 2))
+        else:
+            # offers new detection if no selected any for tracking
+            if maxLoc[0] != 0 and maxLoc[1] != 0:
+                cv.rectangle(self.frame, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20),
+                             (0, 0, 255), thickness=3)
+
+            self.tempMaxLoc = maxLoc
+
+        if state == 67 or state == 99 or not success:
+            print("The target is canceled!")
+            self.tracker = cv.legacy_TrackerCSRT.create()
+            self.target_flag = False
+
+        # 32 = 'Space' on the keyboard
+        if state == 32:
+            box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
+            self.tracker.init(self.frame, box)
+            self.target_flag = True
+            print("On a new target!")
+
+        if position:
+            return position
 
         return -1, -1
 
