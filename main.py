@@ -2,7 +2,7 @@ import cv2
 from Algorithm.object_tracking import ObjectTracking
 
 
-def rescaleFrame(frame, scale=0.5):
+def rescaleFrame(frame, scale=1):
     width = int(frame.shape[1] * scale)
     height = int(frame.shape[0] * scale)
     dimensions = (width, height)
@@ -11,7 +11,7 @@ def rescaleFrame(frame, scale=0.5):
 
 if __name__ == '__main__':
     # Define the codec and create VideoWriter object
-    path = 'videos/night2.mp4'
+    path = 'videos/drone4.mp4'
     capture = cv2.VideoCapture(path)
     capture.set(cv2.CAP_ANY, 0)
     isTrue, frame = capture.read()
