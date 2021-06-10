@@ -2,10 +2,16 @@
 
 Automatic object detection for space and sky using OpenCV
 
-Sky Mode: <br>
-<img width="400" height="250" src="https://cdn.kapwing.com/final_60c252fc5f6f6300524132ac_904809.gif">
-<br>
-Space Mode:<br>
-<img width="400" height="250" src="https://i.ibb.co/Q93fTb8/night.png">
+## Satellites, planes and spacecrafts: <br>
+| | |
+| -- | -- | 
+| <img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/ISS.gif">| <img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/night.gif"> |
 
-v.01
+## Drone Tracking: <br>
+| | |
+| -- | -- | 
+|<img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/drone1.gif"> | <img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/drone2.gif"> |
+
+**Shot on iPhone 12**<br>
+<img width="200" height="350" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/drone3.gif">
+<br>
