@@ -1,13 +1,13 @@
-# SpaceTracker
+| <img width="100" height="100" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/logo.jpg">| Space Tracker <br> Object detection and tracking using smart algorithms via OpenCV.<br> ![Updated](https://img.shields.io/badge/Updated-2021-green)  |
+| --- | --- | 
 
-Object detection and tracking using smart algorithms via OpenCV.
 
-## Satellites, planes and spacecrafts: <br>
+#### Satellites, planes and spacecrafts: <br>
 | | |
 | -- | -- | 
 | <img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/ISS.gif">| <img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/night.gif"> |
 
-## Drone Tracking: <br>
+#### Drone Tracking: <br>
 | | |
 | -- | -- | 
 |<img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/drone1.gif"> | <img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/readme/drone2.gif"> |
