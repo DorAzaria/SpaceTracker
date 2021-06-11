@@ -2,16 +2,16 @@ import cv2
 from Algorithm.object_tracking import ObjectTracking
 
 
-def rescaleFrame(frame, scale=1):
-    width = int(frame.shape[1] * scale)
-    height = int(frame.shape[0] * scale)
-    dimensions = (width, height)
-    return cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
+def rescaleFrame(fr, scale=1.0):
+    w = int(fr.shape[1] * scale)
+    h = int(fr.shape[0] * scale)
+    dimensions = (w, h)
+    return cv2.resize(fr, dimensions, interpolation=cv2.INTER_AREA)
 
 
 if __name__ == '__main__':
     # Define the codec and create VideoWriter object
-    path = 'videos/drone4.mp4'
+    path = 'Videos/ISS.mp4'
     capture = cv2.VideoCapture(path)
     capture.set(cv2.CAP_ANY, 0)
     isTrue, frame = capture.read()
@@ -20,16 +20,15 @@ if __name__ == '__main__':
 
     out = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (int(width), int(height)))
 
-    tracker = ObjectTracking(color_detection=False)
+    object_tracking = ObjectTracking()
 
     while capture.isOpened():
         key = cv2.waitKey(30)
         isTrue, frame = capture.read()
-        frame = rescaleFrame(frame)
+        frame = rescaleFrame(frame, scale=0.5)
 
-        position = tracker.track(frame, state=key)
-        print(position)
-        frame = tracker.getFrame()
+        position = object_tracking.track(frame, state=key)
+        frame = object_tracking.getFrame()
         out.write(frame)
 
         cv2.imshow("Space Tracker", frame)
