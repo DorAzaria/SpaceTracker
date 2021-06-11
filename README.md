@@ -23,7 +23,6 @@ Info
 
 ### Algorithms
 
-* Luckas Kadane
 * MOG2 - Gaussian Mixture-based Background Segmentation
 * CSRT - Discriminative Correlation Filter with Channel and 
            Spatial Reliability
@@ -41,8 +40,8 @@ command to run if program contains helper info
 ## Authors
 
 [@DorAzaria](https://www.linkedin.com/in/dor-azaria/) <br>
-more <br>
-more
+[@InbalCohen](https://github.com/inbalcohen2) <br>
+[@SagieHod](https://github.com/sagiehod) <br>
 
 ## Acknowledgments
 
