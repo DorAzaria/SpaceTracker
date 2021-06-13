@@ -82,13 +82,13 @@ class Telcontrol(tr.Thread):
             max pixel in y axis
         """
 
-        tr.Thread.__init__(self);
+        tr.Thread.__init__(self)
         self.ser = serial.Serial()
         self.ser.port = port  # may be called something different
         self.ser.baudrate = 9600  # may be different
         isopenend = self.ser.open()
 
-        print("Connected to Telescope Controll");
+        print("Connected to Telescope Control")
         self.initProtocol()
         self.mindx = mindx
         self.mindy = mindy
@@ -404,4 +404,3 @@ class Telcontrol(tr.Thread):
                     self.manualDown(speed)
                 else:
                     self.manualUp(speed)
-
