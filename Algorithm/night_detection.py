@@ -1,6 +1,7 @@
 import cv2 as cv
 from numpy import long
 import statistics
+from datetime import datetime
 
 """
     This class manages the detecting and tracking algorithm in night/space.
@@ -21,6 +22,8 @@ class NightMode:
         self.target_flag = False
         self.frame = None
         self.bbox = None
+        self.cancel_msg = 0
+
 
     """
         :return a tuple (X,Y) of the position of the detected/tracked object.
@@ -98,7 +101,7 @@ class NightMode:
 
                 # offers new detection if no selected any for tracking
                 if maxLoc[0] != 0 and maxLoc[1] != 0:
-                    cv.rectangle(self.frame, (maxLoc[0] - 20, maxLoc[1] - 20), (maxLoc[0] + 20, maxLoc[1] + 20),
+                    cv.rectangle(self.frame, (maxLoc[0] - 10, maxLoc[1] - 10), (maxLoc[0] +10, maxLoc[1]+10 ),
                                  (0, 0, 255),
                                  thickness=3)
 
@@ -107,12 +110,24 @@ class NightMode:
             if state == 67 or state == 99 or not success:
                 self.tracker = cv.legacy_TrackerCSRT.create()
                 self.target_flag = False
+                if self.cancel_msg == 1:
+                    self.cancel_msg = 2
+                    print(f'\t\tLost contact at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
+
+            print(len(contours))
             # 32 = 'Space' on the keyboard
             if state == 32:
-                box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
+
+                if len(contours) >= 30:
+                    box = [maxLoc[0] - 10, maxLoc[1] - 10, 20, 20]
+                else:
+                    box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
+
                 self.tracker.init(self.frame, box)
                 self.target_flag = True
+                self.cancel_msg = 1
+                print(f'\t\tTracking a new target at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
             if position:
                 return position

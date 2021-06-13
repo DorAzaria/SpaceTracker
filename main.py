@@ -3,6 +3,7 @@ from serial import SerialException
 from Algorithm.object_tracking import ObjectTracking
 import time
 from Telescope import Telecontrol
+from datetime import datetime
 
 
 class SpaceTracker:
@@ -50,6 +51,7 @@ class SpaceTracker:
 
             # 27 = 'Esc' on the keyboard
             if key == 27 or key & 0xFF == ord('q'):
+                print(f'Exit program at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
                 break
 
         self.capture.release()
@@ -97,6 +99,5 @@ class SpaceTracker:
 
 
 if __name__ == '__main__':
-    tracker = SpaceTracker(telescopeEnabled=False)
-    path = 0
-    tracker.start(video_path=path)
+    tracker = SpaceTracker(telescopeEnabled=False, port='pp')
+    tracker.start(video_path='Videos/6.mp4')

@@ -81,15 +81,16 @@ class ObjectTracking:
     """
 
     def nightModeCheck(self) -> bool:
-        lower_night = np.array([0, 0, 0])
-        upper_night = np.array([179, 255, 155])
-        mask = cv2.inRange(self.frame, lower_night, upper_night)
-        mean = mask.mean()
-        if mean > 250:
+
+        blur = cv2.blur(self.frame, (5, 5))
+        if cv2.mean(blur)[0] > 127:
+            self.mode = DayMode(self.color_detection, self.color)
+            print('Day Mode')
+            return False
+        else:
             self.mode = NightMode()
+            print('Night Mode')
             return True
-        self.mode = DayMode(self.color_detection, self.color)
-        return False
 
     """
         :return the frame to the main program.

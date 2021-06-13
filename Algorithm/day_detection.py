@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 from numpy import long
 import statistics
+from datetime import datetime
 
 """
     This class manages the detecting and tracking algorithm in day-light.
@@ -40,6 +41,8 @@ class DayMode:
         self.position = None
         self.color_detection = color_detection
         self.color = color
+        self.cancel_msg = 0
+        self.mode_msg = 0
 
         # Set range for red color
         self.red_lower = np.array([136, 87, 111], np.uint8)
@@ -137,11 +140,16 @@ class DayMode:
     """
     def skyMode(self, state) -> tuple:
 
+        if self.mode_msg == 0:
+            self.mode_msg = 1
+            print('--> Sky Mode')
+
         if self.last_mode == 'ground' and self.position[0] != -1 and self.position[1] != -1:
             box = [self.bbox[0], self.bbox[1], self.bbox[2] - self.bbox[0], self.bbox[3] - self.bbox[1]]
             self.tracker.init(self.frame, box)
             self.target_flag = True
             self.last_mode = 'sky'
+            print('--> Sky Mode')
             return self.bbox[0] + int(self.bbox[2] / 2), self.bbox[1] + int(self.bbox[3] / 2)
 
         self.last_mode = 'sky'
@@ -184,12 +192,17 @@ class DayMode:
             if state == 67 or state == 99 or not success:
                 self.tracker = cv.legacy_TrackerCSRT.create()
                 self.target_flag = False
+                if self.cancel_msg == 1:
+                    self.cancel_msg = 2
+                    print(f'\t\tLost contact at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
             # 32 = 'Space' on the keyboard
             if state == 32:
                 box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
                 self.tracker.init(self.frame, box)
                 self.target_flag = True
+                self.cancel_msg = 1
+                print(f'\t\tTracking a new target at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
             if position:
                 return position
@@ -252,11 +265,16 @@ class DayMode:
 
     def groundModeByColor(self, state) -> tuple:
 
+        if self.mode_msg == 0:
+            self.mode_msg = 1
+            print('--> Ground Mode')
+
         if self.last_mode == 'sky' and self.position[0] != -1 and self.position[1] != -1:
             box = [self.bbox[0], self.bbox[1], self.bbox[2] - self.bbox[0], self.bbox[3] - self.bbox[1]]
             self.tracker.init(self.frame, box)
             self.target_flag = True
             self.last_mode = 'ground'
+            print('--> Ground Mode')
             return self.bbox[0] + int(self.bbox[2] / 2), self.bbox[1] + int(self.bbox[3] / 2)
 
         self.last_mode = 'ground'
@@ -293,12 +311,17 @@ class DayMode:
             if state == 67 or state == 99 or not success:
                 self.tracker = cv.legacy_TrackerCSRT.create()
                 self.target_flag = False
+                if self.cancel_msg == 1:
+                    self.cancel_msg = 2
+                    print(f'\t\tLost contact at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
             # 32 = 'Space' on the keyboard
             if state == 32:
                 box = [x, y, w, h]
                 self.tracker.init(self.frame, box)
                 self.target_flag = True
+                self.cancel_msg = 1
+                print(f'\t\tTracking a new target at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
             return position
 
@@ -332,11 +355,16 @@ class DayMode:
     """
     def groundMode(self, state) -> tuple:
 
+        if self.mode_msg == 0:
+            self.mode_msg = 1
+            print('--> Ground Mode')
+
         if self.last_mode == 'sky' and self.position[0] != -1 and self.position[1] != -1:
             box = [self.bbox[0], self.bbox[1], self.bbox[2] - self.bbox[0], self.bbox[3] - self.bbox[1]]
             self.tracker.init(self.frame, box)
             self.target_flag = True
             self.last_mode = 'ground'
+            print('--> Ground Mode')
             return self.bbox[0] + int(self.bbox[2] / 2), self.bbox[1] + int(self.bbox[3] / 2)
 
         self.last_mode = 'ground'
@@ -361,12 +389,17 @@ class DayMode:
         if state == 67 or state == 99 or not success:
             self.tracker = cv.legacy_TrackerCSRT.create()
             self.target_flag = False
+            if self.cancel_msg == 1:
+                self.cancel_msg = 2
+                print(f'\t\tLost contact at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
         # 32 = 'Space' on the keyboard
         if state == 32:
             box = [maxLoc[0] - 20, maxLoc[1] - 20, 40, 40]
             self.tracker.init(self.frame, box)
             self.target_flag = True
+            self.cancel_msg = 1
+            print(f'\t\tTracking a new target at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
         if position:
             return position
