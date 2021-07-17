@@ -14,6 +14,7 @@ class SpaceTracker:
         self.frame = None
         self.out = None
         self.object_tracking = None
+        self.key = None
 
         if self.telescopeEnabled:
             if port is None:
@@ -31,7 +32,7 @@ class SpaceTracker:
         self.capture = cv2.VideoCapture(video_path)
         self.capture.set(cv2.CAP_ANY, 0)
         isTrue, self.frame = self.capture.read()
-        self.rescaleFrame(scale=0.5)
+        self.rescaleFrame(scale=1.0)
         height, width, channels = self.frame.shape
         self.out = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
                                    (int(width), int(height)))
@@ -40,7 +41,7 @@ class SpaceTracker:
         while self.capture.isOpened():
             key = cv2.waitKey(30)
             isTrue, self.frame = self.capture.read()
-            self.rescaleFrame(scale=0.5)
+            self.rescaleFrame(scale=1.0)
 
             position = self.object_tracking.track(self.frame, state=key)
             self.frame = self.object_tracking.getFrame()
@@ -62,34 +63,36 @@ class SpaceTracker:
         if self.telescopeEnabled and position[0] != -1 and position[1] != -1:
             dx = position[0] - (self.frame.shape[1] // 2)
             dy = position[1] - (self.frame.shape[0] // 2)
-            sx = 4
-            sy = 4
+            sx = 7
+            sy = 7
 
             if abs(dx) < 100:
-                sx = 3
+                sx = 6
             if abs(dx) < 75:
-                sx = 2
+                sx = 4
             if abs(dx) < 50:
-                sx = 1
+                sx = 3
             if abs(dx) < 10:
-                sx = 0
+                sx = 3
 
             if abs(dy) < 100:
-                sx = 3
+                sx = 6
             if abs(dy) < 75:
-                sx = 2
+                sx = 4
             if abs(dy) < 50:
-                sx = 1
+                sx = 3
             if abs(dy) < 10:
-                sx = 0
+                sx = 3
 
-            telescope_data = "dx: " + str(round(dx)) + ", dy: " + str(
-                round(-dy)) + ", tele speed x axis: " + str(sy) + ", tele speed y axis: " + str(sx)
-            cv2.putText(self.frame, telescope_data, (100, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
-                        (120, 120, 20), 2)
+            key = cv2.waitKey(30)
+            if key == 67 or key == 99:
+                sx = 0
+                sy = 0
 
             self.telescope.moveY(direction=round(dx), speed=sx)
             self.telescope.moveX(direction=round(-dy), speed=sy)
+
+
 
     def rescaleFrame(self, scale=1.0):
         w = int(self.frame.shape[1] * scale)
@@ -99,5 +102,5 @@ class SpaceTracker:
 
 
 if __name__ == '__main__':
-    tracker = SpaceTracker(telescopeEnabled=False, port='pp')
-    tracker.start(video_path='Videos/6.mp4')
+    tracker = SpaceTracker(telescopeEnabled=False, port='COM4')
+    tracker.start(video_path=1)

@@ -63,7 +63,7 @@ class Telcontrol(tr.Thread):
     telescopeY_Direction = 0
     telescopeY_Speed = 0
 
-    def __init__(self, port='com8', baudrate="9600", mindx=10, mindy=10, maxdx=1000, maxdy=1000):
+    def __init__(self, port='COM4', baudrate="9600", mindx=10, mindy=10, maxdx=1000, maxdy=1000):
         """ Init the Telescope
         Parameters
         ----------
@@ -391,10 +391,12 @@ class Telcontrol(tr.Thread):
             """
 
         if abs(direction) < 2:
+
             if (self.telescopeY_Speed != 0):
                 self.stopY()
                 self.telescopeY_Speed = 0
         else:
+
             if (self.telescopeY_Direction != direction | self.telescopeY_Speed != speed):
 
                 self.telescopeY_Direction = direction
@@ -402,5 +404,6 @@ class Telcontrol(tr.Thread):
 
                 if (direction > 0):
                     self.manualDown(speed)
+
                 else:
                     self.manualUp(speed)
