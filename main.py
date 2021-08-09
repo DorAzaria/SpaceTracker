@@ -32,7 +32,7 @@ class SpaceTracker:
         self.capture = cv2.VideoCapture(video_path)
         self.capture.set(cv2.CAP_ANY, 0)
         isTrue, self.frame = self.capture.read()
-        self.rescaleFrame(scale=1.0)
+        self.rescaleFrame(scale=0.5)
         height, width, channels = self.frame.shape
         self.out = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
                                    (int(width), int(height)))
@@ -41,7 +41,7 @@ class SpaceTracker:
         while self.capture.isOpened():
             key = cv2.waitKey(30)
             isTrue, self.frame = self.capture.read()
-            self.rescaleFrame(scale=1.0)
+            self.rescaleFrame(scale=0.5)
 
             position = self.object_tracking.track(self.frame, state=key)
             self.frame = self.object_tracking.getFrame()
@@ -103,4 +103,4 @@ class SpaceTracker:
 
 if __name__ == '__main__':
     tracker = SpaceTracker(telescopeEnabled=False, port='COM4')
-    tracker.start(video_path=1)
+    tracker.start(video_path='Videos/orange.mp4')

@@ -115,7 +115,6 @@ class NightMode:
                     print(f'\t\tLost contact at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
 
 
-            print(len(contours))
             # 32 = 'Space' on the keyboard
             if state == 32:
 
@@ -138,7 +137,7 @@ class NightMode:
         This method suggest the size of radius of detecting-search
         using the mean of the history list of the number of moving objects we found
         in each frame.
-        If the number if big, then look somewhere near because we can't predict where the object
+        If the number is big, then look somewhere near because we can't predict where the object
         has lost if there is too many objects around.
 
         If the number is small, then it can search by a big radius for lost the object.
