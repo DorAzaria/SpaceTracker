@@ -7,10 +7,11 @@ Tracking an object has been one of the problems studied for the past several dec
 <br>Our exposure and desire to create a system of detecting and tracking airborne objects was as part of the "Space Engineering" course of Professor Boaz Ben Moshe, Head of the Department of Computer Science.<br>
 ## Description
 
-We have developed a system for detecting and tracking objects such as satellites, drones and meteorological balloons using the NexStar 8SE Telescope.<br>The system is using smart tracking and detecting algorithms via OpenCV and also with some original detection algorithms.<br>The telescope is connected to a computer that controls the telescope to track the object.<br>The algorithms were performed and tested in daylight videos and also night-time videos and real-time videos. 
+
 
 | | |
 | --- | --- |
+| We have developed a system for detecting and tracking objects such as satellites, drones and meteorological balloons using the NexStar 8SE Telescope.<br>The system is using smart tracking and detecting algorithms via OpenCV and also with some original detection algorithms.<br>The telescope is connected to a computer that controls the telescope to track the object.<br>The algorithms were performed and tested in daylight videos and also night-time videos and real-time videos. | <img width="600" height="300" src="https://github.com/DorAzaria/SpaceTracker/blob/master/README/exp.jpg?raw=true">|
 |For the NexStar 8SE Telescope, an API has been given to us by Semyon Pikolov. <br> The user can choose whether to track the object if any detected. <br>If the object is being tracked, the program returns an X, Y point that requires the telescope to move toward the point.| <img width="200" height="200" src="https://sep.yimg.com/ay/yhst-8480297768913/celestron-nexstar-8se-computerized-telescope-11069-4.gif">|
 
 ## About the code
