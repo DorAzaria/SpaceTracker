@@ -170,6 +170,7 @@ For any advise for common problems or issues please PM.
 | -- | -- | 
 |<img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/README/drone1.gif"> | <img width="400" height="250" src="https://github.com/DorAzaria/SpaceTracker/blob/master/README/drone2.gif"> |
 
-**Shot on iPhone 12**<br>
-<img width="200" height="350" src="https://github.com/DorAzaria/SpaceTracker/blob/master/README/drone3.gif">
-<br>
+|Shot on iPhone 12 | Balloon tracking|
+| -- | -- | 
+|<img width="200" height="350" src="https://github.com/DorAzaria/SpaceTracker/blob/master/README/drone3.gif"> <br> | <img width="200" height="350" src="https://github.com/DorAzaria/SpaceTracker/blob/master/README/balloon.gif?raw=true"><br>| 
+
